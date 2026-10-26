@@ -38,7 +38,7 @@ export default function InfoModal({ isOpen, onClose }) {
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
             <div className="flex items-center gap-2 text-amber-300 font-bold mb-1">
               <Clock className="w-4 h-4" />
-              <span>5.0-Hour Elimination Half-Life ($t_{1/2}$)</span>
+              <span>5.0-Hour Elimination Half-Life (t½ = 5.0h)</span>
             </div>
             <p className="text-slate-400 text-xs">
               In healthy adults, caffeine's mean elimination half-life is approximately 5 hours.

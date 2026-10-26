@@ -192,7 +192,7 @@ export default function App() {
       />
 
       <footer className="text-center py-4 text-[11px] text-slate-600 border-t border-slate-900">
-        Caffeine Tracker • PWA Offline • Half-Life $t_{'{1/2}'} = 5.0\text{h}$
+        Caffeine Tracker • PWA Offline • Half-Life (t½ = 5.0 hours)
       </footer>
     </div>
   );
