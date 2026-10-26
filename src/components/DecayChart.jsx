@@ -1,17 +1,16 @@
 import React from 'react';
-import { HALF_LIFE_HOURS, calculateTotalActive, SLEEP_SAFE_THRESHOLD_MG } from '../utils/caffeine';
+import { calculateTotalActive, SLEEP_SAFE_THRESHOLD_MG } from '../utils/caffeine';
 
 export default function DecayChart({ drinks, currentTime }) {
   const currentActive = calculateTotalActive(drinks, currentTime);
   
-  if (drinks.length === 0 || currentActive < 1) {
+  if (drinks.length === 0 || currentActive < 5) {
     return null;
   }
 
-  // Generate 17 points for next 16 hours (every 1 hour)
   const hoursAhead = 16;
   const points = [];
-  const maxMg = Math.max(currentActive * 1.1, 100);
+  const maxMg = Math.max(currentActive * 1.05, 80);
 
   for (let h = 0; h <= hoursAhead; h += 0.5) {
     const t = currentTime + h * 3600 * 1000;
@@ -19,11 +18,10 @@ export default function DecayChart({ drinks, currentTime }) {
     points.push({ h, mg, t });
   }
 
-  // Chart dimensions
-  const width = 320;
-  const height = 90;
-  const paddingX = 16;
-  const paddingY = 12;
+  const width = 360;
+  const height = 80;
+  const paddingX = 4;
+  const paddingY = 8;
   const innerW = width - paddingX * 2;
   const innerH = height - paddingY * 2;
 
@@ -36,94 +34,53 @@ export default function DecayChart({ drinks, currentTime }) {
     return idx === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`;
   }, '');
 
-  // Fill area under curve
-  const areaD = `${pathD} L ${getX(hoursAhead).toFixed(1)} ${getY(0).toFixed(1)} L ${getX(0).toFixed(1)} ${getY(0).toFixed(1)} Z`;
-
-  // 25mg threshold line
   const sleepLineY = getY(SLEEP_SAFE_THRESHOLD_MG);
 
   return (
-    <div className="w-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 mt-4 backdrop-blur-sm">
-      <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-2">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          Projected 16h Decay Curve
-        </span>
-        <span className="text-[11px] text-emerald-400 font-mono">
-          -- 25 mg Bedtime Target
-        </span>
+    <div className="py-4 border-t border-zinc-900">
+      <div className="flex items-center justify-between text-xs text-zinc-500 mb-2">
+        <span>16-Hour Projection</span>
+        <span className="font-mono text-[11px] text-zinc-600">25 mg sleep limit</span>
       </div>
 
-      <div className="relative w-full overflow-hidden">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24 overflow-visible">
-          <defs>
-            <linearGradient id="decayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
-              <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.05" />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
-            </linearGradient>
-            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#f59e0b" />
-              <stop offset="50%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#34d399" />
-            </linearGradient>
-          </defs>
-
-          {/* Sleep safe threshold dashed line */}
-          {sleepLineY <= height - paddingY && sleepLineY >= paddingY && (
-            <g>
-              <line
-                x1={paddingX}
-                y1={sleepLineY}
-                x2={width - paddingX}
-                y2={sleepLineY}
-                stroke="#34d399"
-                strokeWidth="1.2"
-                strokeDasharray="4 4"
-                strokeOpacity="0.6"
-              />
-              <text
-                x={width - paddingX}
-                y={sleepLineY - 4}
-                textAnchor="end"
-                className="text-[9px] fill-emerald-400 font-mono font-medium"
-              >
-                25 mg
-              </text>
-            </g>
-          )}
-
-          {/* Gradient area */}
-          <path d={areaD} fill="url(#decayGrad)" />
-
-          {/* Curve stroke */}
-          <path
-            d={pathD}
-            fill="none"
-            stroke="url(#lineGrad)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-20 overflow-visible">
+        {/* 25mg threshold dashed line */}
+        {sleepLineY <= height - paddingY && sleepLineY >= paddingY && (
+          <line
+            x1={paddingX}
+            y1={sleepLineY}
+            x2={width - paddingX}
+            y2={sleepLineY}
+            stroke="#27272a"
+            strokeWidth="1"
+            strokeDasharray="3 3"
           />
+        )}
 
-          {/* Now point */}
-          <circle
-            cx={getX(0)}
-            cy={getY(currentActive)}
-            r="4.5"
-            fill="#fbbf24"
-            className="drop-shadow-[0_0_6px_rgba(251,191,36,0.8)]"
-          />
-        </svg>
+        {/* Decay curve */}
+        <path
+          d={pathD}
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
 
-        {/* Time markers */}
-        <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono pt-1">
-          <span>Now</span>
-          <span>+4h</span>
-          <span>+8h</span>
-          <span>+12h</span>
-          <span>+16h</span>
-        </div>
+        {/* Current position */}
+        <circle
+          cx={getX(0)}
+          cy={getY(currentActive)}
+          r="3"
+          fill="#f59e0b"
+        />
+      </svg>
+
+      <div className="flex justify-between text-[10px] text-zinc-600 font-mono mt-1">
+        <span>Now</span>
+        <span>+4h</span>
+        <span>+8h</span>
+        <span>+12h</span>
+        <span>+16h</span>
       </div>
     </div>
   );
