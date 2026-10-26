@@ -5,6 +5,7 @@ import QuickLogActions from './components/QuickLogActions';
 import DecayChart from './components/DecayChart';
 import LogFeed from './components/LogFeed';
 import CustomDrinkModal from './components/CustomDrinkModal';
+import EditDrinkModal from './components/EditDrinkModal';
 import InfoModal from './components/InfoModal';
 import { calculateTotalActive, normalizeTimestamp } from './utils/caffeine';
 
@@ -41,6 +42,7 @@ export default function App() {
 
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [editingDrink, setEditingDrink] = useState(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
@@ -57,7 +59,7 @@ export default function App() {
   useEffect(() => {
     const update = () => setCurrentTime(Date.now());
     
-    const timer = setInterval(update, 5000); // Ticks every 5 seconds
+    const timer = setInterval(update, 5000);
 
     const handleVisibility = () => {
       if (!document.hidden) update();
@@ -116,6 +118,14 @@ export default function App() {
     showToast(`+${Math.round(newEntry.mg)} mg logged`);
   };
 
+  const handleUpdateDrink = (updatedDrink) => {
+    setDrinks((prev) =>
+      prev.map((d) => (d.id === updatedDrink.id ? updatedDrink : d))
+    );
+    setCurrentTime(Date.now());
+    showToast('Entry updated');
+  };
+
   const handleDeleteDrink = (id) => {
     setDrinks((prev) => prev.filter((d) => d.id !== id));
     setCurrentTime(Date.now());
@@ -167,6 +177,7 @@ export default function App() {
         <LogFeed
           drinks={drinks}
           currentTime={currentTime}
+          onEditDrink={(drink) => setEditingDrink(drink)}
           onDeleteDrink={handleDeleteDrink}
           onClearAll={handleClearAll}
         />
@@ -178,12 +189,23 @@ export default function App() {
         </div>
       )}
 
+      {/* Custom Drink Logger */}
       <CustomDrinkModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onAddDrink={handleAddCustomDrink}
       />
 
+      {/* Edit Drink & Time Modal */}
+      <EditDrinkModal
+        isOpen={Boolean(editingDrink)}
+        drink={editingDrink}
+        onClose={() => setEditingDrink(null)}
+        onSave={handleUpdateDrink}
+        onDelete={handleDeleteDrink}
+      />
+
+      {/* Science & Info Modal */}
       <InfoModal
         isOpen={isInfoModalOpen}
         onClose={() => setIsInfoModalOpen(false)}

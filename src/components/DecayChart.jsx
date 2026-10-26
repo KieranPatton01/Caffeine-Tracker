@@ -12,18 +12,19 @@ export default function DecayChart({ drinks, currentTime }) {
   const points = [];
   const maxMg = Math.max(currentActive * 1.05, 80);
 
-  for (let h = 0; h <= hoursAhead; h += 0.5) {
+  // High resolution points for smooth curve
+  for (let h = 0; h <= hoursAhead; h += 0.25) {
     const t = currentTime + h * 3600 * 1000;
     const mg = calculateTotalActive(drinks, t);
     points.push({ h, mg, t });
   }
 
   const width = 360;
-  const height = 80;
-  const paddingX = 4;
-  const paddingY = 8;
+  const height = 95;
+  const paddingX = 16;
+  const paddingY = 10;
   const innerW = width - paddingX * 2;
-  const innerH = height - paddingY * 2;
+  const innerH = height - paddingY - 26; // Leave space at bottom for hour axis
 
   const getX = (h) => paddingX + (h / hoursAhead) * innerW;
   const getY = (mg) => paddingY + (1 - Math.min(mg, maxMg) / maxMg) * innerH;
@@ -35,26 +36,40 @@ export default function DecayChart({ drinks, currentTime }) {
   }, '');
 
   const sleepLineY = getY(SLEEP_SAFE_THRESHOLD_MG);
+  const axisY = paddingY + innerH;
+
+  // Array of hours 0 to 16
+  const hours = Array.from({ length: hoursAhead + 1 }, (_, i) => i);
 
   return (
     <div className="py-4 border-t border-zinc-900">
       <div className="flex items-center justify-between text-xs text-zinc-500 mb-2">
         <span>16-Hour Projection</span>
-        <span className="font-mono text-[11px] text-zinc-600">25 mg sleep limit</span>
+        <span className="font-mono text-[11px] text-zinc-600">25 mg sleep target</span>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-20 overflow-visible">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24 overflow-visible">
         {/* 25mg threshold dashed line */}
-        {sleepLineY <= height - paddingY && sleepLineY >= paddingY && (
-          <line
-            x1={paddingX}
-            y1={sleepLineY}
-            x2={width - paddingX}
-            y2={sleepLineY}
-            stroke="#27272a"
-            strokeWidth="1"
-            strokeDasharray="3 3"
-          />
+        {sleepLineY <= axisY && sleepLineY >= paddingY && (
+          <g>
+            <line
+              x1={paddingX}
+              y1={sleepLineY}
+              x2={width - paddingX}
+              y2={sleepLineY}
+              stroke="#27272a"
+              strokeWidth="1"
+              strokeDasharray="3 3"
+            />
+            <text
+              x={width - paddingX}
+              y={sleepLineY - 3}
+              textAnchor="end"
+              className="text-[9px] fill-zinc-600 font-mono"
+            >
+              25mg
+            </text>
+          </g>
         )}
 
         {/* Decay curve */}
@@ -73,15 +88,54 @@ export default function DecayChart({ drinks, currentTime }) {
           r="3"
           fill="#f59e0b"
         />
-      </svg>
 
-      <div className="flex justify-between text-[10px] text-zinc-600 font-mono mt-1">
-        <span>Now</span>
-        <span>+4h</span>
-        <span>+8h</span>
-        <span>+12h</span>
-        <span>+16h</span>
-      </div>
+        {/* Baseline axis line */}
+        <line
+          x1={paddingX}
+          y1={axisY}
+          x2={width - paddingX}
+          y2={axisY}
+          stroke="#18181b"
+          strokeWidth="1"
+        />
+
+        {/* Each individual hour tick mark and label */}
+        {hours.map((h) => {
+          const x = getX(h);
+          const isMajor = h % 4 === 0;
+          const tickHeight = isMajor ? 5 : 3;
+
+          return (
+            <g key={h}>
+              {/* Vertical ruler tick */}
+              <line
+                x1={x}
+                y1={axisY}
+                x2={x}
+                y2={axisY + tickHeight}
+                stroke={isMajor ? '#52525b' : '#27272a'}
+                strokeWidth={isMajor ? 1.2 : 0.8}
+              />
+
+              {/* Hour number label */}
+              <text
+                x={x}
+                y={axisY + 15}
+                textAnchor="middle"
+                className={`font-mono text-[9px] select-none ${
+                  h === 0
+                    ? 'fill-amber-400 font-semibold'
+                    : isMajor
+                    ? 'fill-zinc-400 font-medium'
+                    : 'fill-zinc-600'
+                }`}
+              >
+                {h === 0 ? 'Now' : h === 16 ? '16h' : h}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
