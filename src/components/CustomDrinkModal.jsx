@@ -15,17 +15,15 @@ const PRESETS = [
 export default function CustomDrinkModal({ isOpen, onClose, onAddDrink }) {
   const [name, setName] = useState('');
   const [mg, setMg] = useState('100');
+  const [minutesOffset, setMinutesOffset] = useState(0); // 0 = now, 30 = 30m ago, etc.
   const [customDateTime, setCustomDateTime] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setName('');
       setMg('100');
-      const now = new Date();
-      const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setCustomDateTime(localIso);
+      setMinutesOffset(0);
+      setCustomDateTime('');
     }
   }, [isOpen]);
 
@@ -36,12 +34,9 @@ export default function CustomDrinkModal({ isOpen, onClose, onAddDrink }) {
     setMg(preset.mg.toString());
   };
 
-  const handleOffsetMinutes = (minsAgo) => {
-    const past = new Date(Date.now() - minsAgo * 60 * 1000);
-    const localIso = new Date(past.getTime() - past.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-    setCustomDateTime(localIso);
+  const handleOffsetClick = (mins) => {
+    setMinutesOffset(mins);
+    setCustomDateTime('');
   };
 
   const handleSubmit = (e) => {
@@ -49,10 +44,12 @@ export default function CustomDrinkModal({ isOpen, onClose, onAddDrink }) {
     const caffeineMg = parseFloat(mg);
     if (isNaN(caffeineMg) || caffeineMg <= 0) return;
 
-    let timestamp = Date.now();
+    let timestamp = Date.now() - (minutesOffset * 60 * 1000);
     if (customDateTime) {
       const parsed = new Date(customDateTime).getTime();
-      if (!isNaN(parsed)) timestamp = parsed;
+      if (!isNaN(parsed)) {
+        timestamp = parsed;
+      }
     }
 
     onAddDrink({
@@ -124,35 +121,37 @@ export default function CustomDrinkModal({ isOpen, onClose, onAddDrink }) {
           </div>
 
           <div>
-            <label className="text-xs text-zinc-400 block mb-1">Time</label>
-            <div className="flex gap-1.5 mb-2">
-              <button
-                type="button"
-                onClick={() => handleOffsetMinutes(0)}
-                className="flex-1 py-1 rounded bg-zinc-900 text-xs text-zinc-300 hover:bg-zinc-800"
-              >
-                Now
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOffsetMinutes(30)}
-                className="flex-1 py-1 rounded bg-zinc-900 text-xs text-zinc-300 hover:bg-zinc-800"
-              >
-                -30m
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOffsetMinutes(60)}
-                className="flex-1 py-1 rounded bg-zinc-900 text-xs text-zinc-300 hover:bg-zinc-800"
-              >
-                -1h
-              </button>
+            <label className="text-xs text-zinc-400 block mb-1">When consumed</label>
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {[
+                { label: 'Now', mins: 0 },
+                { label: '-30m', mins: 30 },
+                { label: '-1h', mins: 60 },
+                { label: '-2h', mins: 120 }
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => handleOffsetClick(opt.mins)}
+                  className={`py-1.5 rounded text-xs font-mono transition ${
+                    minutesOffset === opt.mins && !customDateTime
+                      ? 'bg-zinc-200 text-black font-semibold'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
+
             <input
               type="datetime-local"
               value={customDateTime}
-              onChange={(e) => setCustomDateTime(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300"
+              onChange={(e) => {
+                setCustomDateTime(e.target.value);
+                setMinutesOffset(-1);
+              }}
+              className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 focus:text-white"
             />
           </div>
 

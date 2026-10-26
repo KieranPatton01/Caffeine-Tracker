@@ -6,7 +6,7 @@ import DecayChart from './components/DecayChart';
 import LogFeed from './components/LogFeed';
 import CustomDrinkModal from './components/CustomDrinkModal';
 import InfoModal from './components/InfoModal';
-import { calculateTotalActive } from './utils/caffeine';
+import { calculateTotalActive, normalizeTimestamp } from './utils/caffeine';
 
 const STORAGE_KEY = 'caffeine_tracker_entries_v1';
 
@@ -14,7 +14,16 @@ export default function App() {
   const [drinks, setDrinks] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map(d => ({
+            ...d,
+            mg: Number(d.mg) || 0,
+            timestamp: normalizeTimestamp(d.timestamp)
+          }));
+        }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -44,9 +53,26 @@ export default function App() {
     }
   }, [drinks]);
 
+  // Real-time decay ticker: fast 5s interval + immediate refresh on tab resume / focus
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(Date.now()), 30000);
-    return () => clearInterval(timer);
+    const update = () => setCurrentTime(Date.now());
+    
+    const timer = setInterval(update, 5000); // Ticks every 5 seconds
+
+    const handleVisibility = () => {
+      if (!document.hidden) update();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', update);
+    window.addEventListener('pageshow', update);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', update);
+      window.removeEventListener('pageshow', update);
+    };
   }, []);
 
   useEffect(() => {
@@ -69,7 +95,7 @@ export default function App() {
     const newEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name,
-      mg,
+      mg: Number(mg),
       timestamp: Date.now(),
       type
     };
@@ -81,6 +107,8 @@ export default function App() {
   const handleAddCustomDrink = (drink) => {
     const newEntry = {
       ...drink,
+      mg: Number(drink.mg),
+      timestamp: normalizeTimestamp(drink.timestamp),
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     };
     setDrinks((prev) => [newEntry, ...prev]);
@@ -90,12 +118,14 @@ export default function App() {
 
   const handleDeleteDrink = (id) => {
     setDrinks((prev) => prev.filter((d) => d.id !== id));
+    setCurrentTime(Date.now());
     showToast('Entry removed');
   };
 
   const handleClearAll = () => {
     if (window.confirm('Clear all logs?')) {
       setDrinks([]);
+      setCurrentTime(Date.now());
       showToast('Cleared');
     }
   };

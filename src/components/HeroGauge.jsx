@@ -5,14 +5,15 @@ import {
   formatClockTime, 
   formatRelativeDuration,
   get24HourIntake,
+  getDecayRate,
   DAILY_MAX_MG,
   SLEEP_SAFE_THRESHOLD_MG,
   FULL_CLEARANCE_THRESHOLD_MG
 } from '../utils/caffeine';
 
 export default function HeroGauge({ drinks, currentTime, activeCaffeine }) {
-  const roundedActive = Math.round(activeCaffeine);
   const status = getAlertnessStatus(activeCaffeine);
+  const decayRate = getDecayRate(activeCaffeine);
 
   const sleepClearance = calculateClearanceTimestamp(drinks, SLEEP_SAFE_THRESHOLD_MG, currentTime);
   const fullClearance = calculateClearanceTimestamp(drinks, FULL_CLEARANCE_THRESHOLD_MG, currentTime);
@@ -20,22 +21,37 @@ export default function HeroGauge({ drinks, currentTime, activeCaffeine }) {
   const intake24h = Math.round(get24HourIntake(drinks, currentTime));
   const intakePercent = Math.min(100, Math.round((intake24h / DAILY_MAX_MG) * 100));
 
+  // Split integer and single decimal for crisp typography
+  const intPart = Math.floor(activeCaffeine);
+  const decPart = (activeCaffeine % 1).toFixed(1).slice(1); // e.g. ".2"
+
   return (
     <div className="py-6">
-      {/* Status indicator */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`w-2 h-2 rounded-full ${status.dotClass}`} />
-        <span className="text-xs font-medium tracking-wide uppercase text-zinc-400">
-          {status.label}
-        </span>
+      {/* Status indicator and elimination speed */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${status.dotClass}`} />
+          <span className="text-xs font-medium tracking-wide uppercase text-zinc-400">
+            {status.label}
+          </span>
+        </div>
+
+        {activeCaffeine > 5 && (
+          <span className="text-[11px] font-mono text-zinc-500">
+            -{decayRate.hourly.toFixed(1)} mg/h
+          </span>
+        )}
       </div>
 
-      {/* Main active caffeine stat */}
-      <div className="flex items-baseline gap-2">
+      {/* Main active caffeine stat with decimal precision */}
+      <div className="flex items-baseline gap-0.5">
         <span className="text-7xl font-light tracking-tight text-white font-mono">
-          {roundedActive}
+          {intPart}
         </span>
-        <span className="text-2xl font-light text-zinc-500">mg</span>
+        <span className="text-3xl font-light text-zinc-500 font-mono">
+          {decPart}
+        </span>
+        <span className="text-2xl font-light text-zinc-600 ml-1.5 font-sans">mg</span>
       </div>
 
       {/* Sleep & Clearance metrics */}
