@@ -1,20 +1,23 @@
-const CACHE_NAME = 'caffeine-tracker-v1';
+const CACHE_NAME = 'caffeine-tracker-v3';
+const BASE_PATH = '/Caffeine-Tracker/';
+
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.svg',
-  './icon-192.png',
-  './icon-512.png'
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'icon.svg',
+  BASE_PATH + 'icon-192.png',
+  BASE_PATH + 'icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('Some cache items failed to pre-cache:', err);
+        console.warn('Some assets could not be cached immediately:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -24,6 +27,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('Clearing old cache:', key);
             return caches.delete(key);
           }
         })
@@ -33,30 +37,33 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
-
-  // For navigation requests (e.g. loading the page or SPA refreshes), return cached index.html if offline
+  // Network-First for navigation (HTML) so users always receive latest deployment
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('./') || caches.match('./index.html');
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(BASE_PATH) || caches.match(BASE_PATH + 'index.html');
+        })
     );
     return;
   }
 
-  // Stale-while-revalidate for local static assets
+  // Stale-While-Revalidate for other static assets (JS, CSS, icons)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return networkResponse;
       }).catch(() => cachedResponse);

@@ -10,25 +10,46 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Caffeine Tracker" />
     
-    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
-    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/Caffeine-Tracker/icon.svg" />
+    <link rel="apple-touch-icon" href="/Caffeine-Tracker/icon-192.png" />
+    <link rel="manifest" href="/Caffeine-Tracker/manifest.json" />
 
     <title>Caffeine Tracker - Smart Half-Life & Sleep Projections</title>
+
+    <script>
+      // Global error listener to display error if script fails to load or execute
+      window.addEventListener('error', function(e) {
+        var el = document.getElementById('loading-state');
+        if (el) {
+          el.innerHTML = '<div style="color:#f87171;padding:24px;text-align:center;font-family:sans-serif;">' +
+            '<h2 style="font-weight:bold;margin-bottom:8px;">App Error</h2>' +
+            '<p style="font-size:13px;color:#94a3b8;max-width:320px;margin:0 auto 16px;">' + (e.message || 'Error loading script') + '</p>' +
+            '<button onclick="location.reload(true)" style="background:#f59e0b;color:#000;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;cursor:pointer;">Refresh App</button>' +
+            '</div>';
+        }
+      });
+    </script>
   </head>
   <body class="bg-[#090d16] text-slate-100 antialiased selection:bg-amber-500/30 selection:text-amber-200 min-h-screen">
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
+    <div id="root">
+      <div id="loading-state" class="flex flex-col items-center justify-center min-h-screen text-slate-400 gap-3 font-sans">
+        <div class="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"></div>
+        <div class="text-sm font-medium text-slate-300">Loading Caffeine Tracker...</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Register service worker for offline PWA support with GitHub Pages scope compatibility
+      // Register service worker with GitHub Pages scope
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js', { scope: './' })
-            .then((registration) => {
-              console.log('Caffeine Tracker PWA Service Worker registered with scope:', registration.scope);
+          navigator.serviceWorker.register('/Caffeine-Tracker/sw.js', { scope: '/Caffeine-Tracker/' })
+            .then((reg) => {
+              console.log('Caffeine Tracker SW registered with scope:', reg.scope);
+              reg.update();
             })
             .catch((error) => {
-              console.warn('PWA Service Worker registration failed:', error);
+              console.warn('PWA Service Worker registration:', error);
             });
         });
       }

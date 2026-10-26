@@ -58,14 +58,14 @@ export default function DecayChart({ drinks, currentTime }) {
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24 overflow-visible">
           <defs>
             <linearGradient id="decayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35" />
-              <stop offset="70%" stop-color="#f59e0b" stop-opacity="0.05" />
-              <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0" />
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
+              <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.05" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
             </linearGradient>
             <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#f59e0b" />
-              <stop offset="50%" stop-color="#fbbf24" />
-              <stop offset="100%" stop-color="#34d399" />
+              <stop offset="0%" stopColor="#f59e0b" />
+              <stop offset="50%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#34d399" />
             </linearGradient>
           </defs>
 
