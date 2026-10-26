@@ -43,33 +43,22 @@ export default function DecayChart({ drinks, currentTime }) {
 
   return (
     <div className="py-4 border-t border-zinc-900">
-      <div className="flex items-center justify-between text-xs text-zinc-500 mb-2">
+      <div className="text-xs text-zinc-500 mb-2">
         <span>16-Hour Projection</span>
-        <span className="font-mono text-[11px] text-zinc-600">25 mg sleep target</span>
       </div>
 
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24 overflow-visible">
         {/* 25mg threshold dashed line */}
         {sleepLineY <= axisY && sleepLineY >= paddingY && (
-          <g>
-            <line
-              x1={paddingX}
-              y1={sleepLineY}
-              x2={width - paddingX}
-              y2={sleepLineY}
-              stroke="#27272a"
-              strokeWidth="1"
-              strokeDasharray="3 3"
-            />
-            <text
-              x={width - paddingX}
-              y={sleepLineY - 3}
-              textAnchor="end"
-              className="text-[9px] fill-zinc-600 font-mono"
-            >
-              25mg
-            </text>
-          </g>
+          <line
+            x1={paddingX}
+            y1={sleepLineY}
+            x2={width - paddingX}
+            y2={sleepLineY}
+            stroke="#27272a"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
         )}
 
         {/* Decay curve */}

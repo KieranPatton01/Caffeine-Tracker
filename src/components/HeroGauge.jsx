@@ -1,22 +1,14 @@
 import React from 'react';
 import { 
   getAlertnessStatus, 
-  calculateClearanceTimestamp, 
-  formatClockTime, 
-  formatRelativeDuration,
-  get24HourIntake,
-  getDecayRate,
-  DAILY_MAX_MG,
-  SLEEP_SAFE_THRESHOLD_MG,
-  FULL_CLEARANCE_THRESHOLD_MG
+  get24HourIntake, 
+  getDecayRate, 
+  DAILY_MAX_MG 
 } from '../utils/caffeine';
 
 export default function HeroGauge({ drinks, currentTime, activeCaffeine }) {
   const status = getAlertnessStatus(activeCaffeine);
   const decayRate = getDecayRate(activeCaffeine);
-
-  const sleepClearance = calculateClearanceTimestamp(drinks, SLEEP_SAFE_THRESHOLD_MG, currentTime);
-  const fullClearance = calculateClearanceTimestamp(drinks, FULL_CLEARANCE_THRESHOLD_MG, currentTime);
 
   const intake24h = Math.round(get24HourIntake(drinks, currentTime));
   const intakePercent = Math.min(100, Math.round((intake24h / DAILY_MAX_MG) * 100));
@@ -52,36 +44,6 @@ export default function HeroGauge({ drinks, currentTime, activeCaffeine }) {
           {decPart}
         </span>
         <span className="text-2xl font-light text-zinc-600 ml-1.5 font-sans">mg</span>
-      </div>
-
-      {/* Sleep & Clearance metrics */}
-      <div className="mt-4 space-y-1.5 text-sm">
-        <div className="flex items-center justify-between text-zinc-300">
-          <span className="text-zinc-500">Sleep-ready (&lt;25mg)</span>
-          <span className="font-mono font-medium">
-            {sleepClearance ? (
-              <>
-                {formatClockTime(sleepClearance.timestamp, new Date(currentTime))}
-                <span className="text-zinc-500 ml-1.5">
-                  ({formatRelativeDuration(sleepClearance.hoursRemaining)})
-                </span>
-              </>
-            ) : (
-              <span className="text-emerald-400 font-sans">Ready now</span>
-            )}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-zinc-400">
-          <span className="text-zinc-600">Zero caffeine (&lt;5mg)</span>
-          <span className="font-mono">
-            {fullClearance ? (
-              formatClockTime(fullClearance.timestamp, new Date(currentTime))
-            ) : (
-              <span className="text-zinc-500">Cleared</span>
-            )}
-          </span>
-        </div>
       </div>
 
       {/* Daily intake hairline bar */}
